@@ -3,8 +3,7 @@
 
 unsigned char x;
 unsigned char y;
-unsigned char comp1;
-unsigned char comp2;
+unsigned char comp;
 
 // ISR(ADC_vect){ // handler for ADC interrupt
 // 	//x++;
@@ -31,8 +30,9 @@ int main(void) {
 	DDRC &= ~(1<<1);				//PC1
 
 	DDRB = 0xFF;
+	DDRD |= (1<<6);				//PD6 (OC0A)
 
-	// PORTB = 0;
+	PORTB = 0;
 
 	// PORTB |= (1<<5);
 
@@ -56,16 +56,11 @@ int main(void) {
 	ADMUX |= (1<<ADLAR);			// Left align (bit 5)
 
 
-	// PORTB |= (1<<5);
+	TCCR0A = (1 << WGM01) | (1 << WGM00);			//Fast PWM
+	TCCR0A |= (1 << COM0A1);			//Non inverting
+	TCCR0B = 0x03;//(1 << CS01) | (1 << CS00)	// 64 prescaler 
 
-
-	// sei();
-
-	comp1 = 120;
-	comp2 = 250;
-
-
-	// PORTB |= (1<<5);
+	sei();
 
 	while(1){
 
@@ -76,16 +71,19 @@ int main(void) {
 		x = ADCL;
 		y = ADCH;
 
-		if (y > comp2){
-			PORTB = 0x3;
-		}
-		else if ( y > comp1){
-			PORTB = 0x1;
+
+		if (y < 100){
+			y = 0;
 		}else{
-			PORTB = 0x0;
+			y -= 100;
+			y *= 2;
 		}
 
-		ADCSRA |= (1<<ADIF);			// Clear ADC
+
+		OCR0A = y;
+
+
+		ADCSRA |= (1<<ADIF);			// Clear ADC flag
 
 	}
 
