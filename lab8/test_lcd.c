@@ -13,6 +13,40 @@ Hardware: HD44780 compatible LCD text display
 #include <util/delay.h>
 #include "lcd.h"
 
+#define KEY_ADDR 0
+
+void EEPROMwrite(unsigned int address, char data){
+
+  // wait for completion of previous write
+  while (EECR & (1<<EEPE));
+
+  // set up address and data regs
+  EEAR = address;
+  EEDR = data;
+
+  // write logical 1 to EEMPE
+  EECR |= (1<<EEMPE)
+
+  // start eeprom write
+  EECR |= (1<<EEPE);
+}
+
+char EEPROMread(unsigned int address){
+
+  // wait for completion of previous write
+  while (EECR & (1<<EEPE));
+
+  // set up address
+  EEAR = address;
+
+  // start eeprom read
+  EECR |= (1<<EERE);
+
+  return EEDR;
+}
+
+
+
 char keyMap[4][4] = {
   {'1','2','3','A'},
   {'4','5','6','B'},
@@ -87,10 +121,12 @@ int main(void)
   /* initialize display, cursor off */
   lcd_init(LCD_DISP_ON);
 
+  // load key at startup
+  key = (int) EEPROMread(KEY_ADDR);
 
   int state = 0;
   int i;
-        
+
   for (;;) {
 	
   	switch (state){
@@ -149,7 +185,9 @@ int main(void)
           
   	    //convert buff the integer and put it to key variable
         key = atoi(buffer);
+
         _delay_ms(100);
+
 
         lcd_gotoxy(0,0);
         lcd_puts("Key set!");
@@ -159,6 +197,7 @@ int main(void)
 
 
         //save it in EEPROM
+        EEPROMwrite(KEY_ADDR, (char)key);
 
         state = 0;
         break;
@@ -188,8 +227,6 @@ int main(void)
           lcd_gotoxy(i,0); 
         }
         buffer[i] = 0;
-
-        //save it in EEPROM
 
         //cypher the string
         i=0;
