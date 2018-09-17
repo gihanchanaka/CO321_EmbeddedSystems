@@ -36,8 +36,21 @@ char usart_receive(){
 	return c;
 }
 
+
+void sendLine(char ar[]){
+	int i=0;
+	while(ar[i]){
+		usart_send(ar[i]);
+		i++;
+	}
+	usart_send('\0');
+}
+
 int main(){
-	
+	usart_init();
+	sendLine("Gihan E/14/158");
+	sendLine("Gihan E/14/158");
+	sendLine("Gihan E/14/158");
 
 
 	return 0;
